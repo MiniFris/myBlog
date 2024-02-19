@@ -1,5 +1,21 @@
 version: '3.4'
 services:
+    database:
+        image: postgres:15
+        environment:
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        volumes:
+            - ./data/database:/var/lib/postgresql/data/
+        networks:
+            backend:
+                ipv4_address: 172.20.54.2
+        expose:
+            - ${DB_PORT}
+        restart: always
     dev:
         build:
             context: .
@@ -14,6 +30,8 @@ services:
                 max-size: "50m"
         volumes:
             - .:/myBlog
+        depends_on:
+            - database
         network_mode: host
         restart: always
     prod:
@@ -30,4 +48,16 @@ services:
             driver: "json-file"
             options:
                 max-size: "50m"
+        depends_on:
+            - database
+        networks:
+            backend:
+                ipv4_address: 172.20.54.1
         restart: always
+
+networks:
+    backend:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 172.20.54.0/16
