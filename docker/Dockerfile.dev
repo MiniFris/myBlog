@@ -1,0 +1,6 @@
+FROM node:18.16.0 as dev
+
+WORKDIR /myBlog
+ENV TZ=Europe/Moscow
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+CMD [ -d "node_modules" ] && npm run start:dev || npm install && npm run start:dev
