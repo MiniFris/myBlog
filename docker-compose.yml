@@ -1,0 +1,33 @@
+version: '3.4'
+services:
+    dev:
+        build:
+            context: .
+            dockerfile: "./docker/Dockerfile.dev"
+        env_file:
+            - .env
+        environment:
+            - NODE_ENV=development
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        volumes:
+            - .:/myBlog
+        network_mode: host
+        restart: always
+    prod:
+        build:
+            context: .
+            dockerfile: "./docker/Dockerfile.prod"
+        env_file:
+            - .env
+        environment:
+            - NODE_ENV=production
+        ports:
+            - ${API_HTTP_PORT}:${API_HTTP_PORT}
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        restart: always
