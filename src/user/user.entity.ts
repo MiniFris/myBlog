@@ -1,8 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'users' })
 export class User {
-    @PrimaryGeneratedColumn('increment')
+    @PrimaryGeneratedColumn()
     id: number;
 
     @Column({ length: 50 })
@@ -13,6 +13,9 @@ export class User {
 
     @Column('text')
     password: string;
+
+    @Column('text', { nullable: true })
+    refreshToken: string;
 
     @CreateDateColumn({ default: 'NOW()' })
     createdAt: Date;

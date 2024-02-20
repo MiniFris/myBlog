@@ -8,12 +8,13 @@ export class CreateUserTable1708398644897 implements MigrationInterface {
         await queryRunner.createTable(new Table({
             name: table,
             columns: [
-                { name: 'id', type: 'INT', isPrimary: true, generationStrategy: 'increment' },
-                { name: 'firstName', type: 'VARCHAR(50)' },
-                { name: 'email', type: 'VARCHAR(50)', isUnique: true },
-                { name: 'password', type: 'TEXT' },
-                { name: 'createdAt', type: 'TIMESTAMP', default: 'NOW()' },
-                { name: 'updatedAt', type: 'TIMESTAMP', default: 'NOW()', onUpdate: 'NOW()' },
+                { name: 'id', type: 'int', isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
+                { name: 'firstName', type: 'varchar(50)' },
+                { name: 'email', type: 'varchar(50)', isUnique: true },
+                { name: 'password', type: 'text' },
+                { name: 'refreshToken', type: 'text', isNullable: true },
+                { name: 'createdAt', type: 'timestamp', default: 'now()' },
+                { name: 'updatedAt', type: 'timestamp', default: 'now()', onUpdate: 'now()' },
             ]
         }));
     }
