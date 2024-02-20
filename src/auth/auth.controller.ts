@@ -20,7 +20,7 @@ export class AuthController {
     ) {}
 
     @ApiOperation({ summary: 'Регистрация пользователя' })
-    @ApiNoContentResponse({ description: 'Успешная регистрация пользователя' })
+    @ApiNoContentResponse()
     @HttpCode(HttpStatus.NO_CONTENT)
     @Post('/reg')
     async reg(@Body() data: AuthRegistrationDto) {
@@ -28,7 +28,7 @@ export class AuthController {
     }
 
     @ApiOperation({ summary: 'Аутентификация пользователя' })
-    @ApiCreatedResponse({ type: AuthTokensResponse, description: 'Успешная авторизация пользователя' })
+    @ApiCreatedResponse({ type: AuthTokensResponse })
     @TransformToHttpResponse(AuthTokensResponse)
     @Post('/login')
     async login(@Body() data: AuthLoginDto): Promise<AuthTokens> {
@@ -37,7 +37,7 @@ export class AuthController {
 
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Обновить токены' })
-    @ApiOkResponse({ type: AuthTokensResponse, description: 'Успешное обновление токенов' })
+    @ApiOkResponse({ type: AuthTokensResponse })
     @TransformToHttpResponse(AuthTokensResponse)
     @UseGuards(RefreshTokenGuard)
     @Get('/refresh')

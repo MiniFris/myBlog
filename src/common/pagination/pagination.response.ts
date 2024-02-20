@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 
-import { HttpResponse } from './http-response';
+import { HttpResponse } from '../http-response/http-response';
 
 export class PaginationResponse<T> extends HttpResponse {
     @ApiProperty({ description: 'Количество имеющихся элементов', example: 5 })
