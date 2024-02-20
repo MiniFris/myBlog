@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Article } from 'src/article/article.entity';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User {
@@ -22,4 +23,9 @@ export class User {
 
     @UpdateDateColumn({ default: 'NOW()', onUpdate: 'NOW()' })
     updatedAt: Date;
+
+
+    //FOREIGN KEY
+    @OneToMany(() => Article, (article) => article.author, { onDelete: 'CASCADE' })
+    articles: Article[];
 }
