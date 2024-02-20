@@ -1,14 +1,16 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { FindManyOptions, QueryFailedError, Repository } from 'typeorm';
 import { QueryFailedErrorCode } from 'src/database/enum/query-failed-error-code.enum';
 import { Pagination } from 'src/common/pagination/interface/pagination.interface';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
-import { ARTICLE_REPOSITORY } from './constant';
+import { ARTICLE_REPOSITORY, AUTHOR_ID_NOT_EXIST } from './constant';
 import { Article } from './article.entity';
 import { CreateArticlePayload } from './payload/create-article.payload';
 import { UpdateArticlePayload } from './payload/update-article.payload';
 import { PaginationOptions } from '../common/pagination/interface/pagination-options.interface';
 import { ArticleSearchOptions } from './interface/article-search-options.interface';
+import { ArticleCacheKeysEnum } from './enum/article-cache-keys.enum';
 
 
 @Injectable()
@@ -17,16 +19,20 @@ export class ArticleService {
     constructor(
         @Inject(ARTICLE_REPOSITORY)
         private readonly repository: Repository<Article>,
+        @Inject(CACHE_MANAGER)
+        private readonly cacheManager: Cache,
     ) {}
 
 
     //CUD
     public async create(payload: CreateArticlePayload): Promise<Article> {
         try {
-            return await this.repository.save(payload);
+            const model = await this.repository.save(payload);
+            this.clearCache();
+            return model;
         } catch(e) {
-            if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.UNIQUE_CONSTRAINT) {
-                // throw new BadRequestException(USER_WITH_EMAIL_EXISTS(payload.email));
+            if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.FOREIGN_KEY_CONSTRAINT) {
+                throw new BadRequestException(AUTHOR_ID_NOT_EXIST());
             }
             throw e;
         }
@@ -35,10 +41,11 @@ export class ArticleService {
     public async update(id: number, payload: UpdateArticlePayload): Promise<Article> {
         try {
             await this.repository.update(id, payload);
+            this.clearCache();
             return this.findById(id);
         } catch(e) {
-            if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.UNIQUE_CONSTRAINT) {
-                // throw new BadRequestException(USER_WITH_EMAIL_EXISTS(payload.email));
+            if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.FOREIGN_KEY_CONSTRAINT) {
+                throw new BadRequestException(AUTHOR_ID_NOT_EXIST());
             }
             throw e;
         }
@@ -46,6 +53,7 @@ export class ArticleService {
 
     public async delete(id: number) {
         await this.repository.delete(id);
+        this.clearCache();
     }
 
 
@@ -88,5 +96,12 @@ export class ArticleService {
             totalCount,
             items,
         };
+    }
+
+
+    //Methods
+    private async clearCache() {
+        const keys = Object.values(ArticleCacheKeysEnum);
+        await Promise.all(keys.map(k => this.cacheManager.del(`${k}:*`)));
     }
 }
