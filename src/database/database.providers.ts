@@ -1,9 +1,10 @@
-import { User } from 'src/user/user.entity';
 import { DataSource } from 'typeorm';
+
+import { DATA_SOURCE } from './constant';
 
 export const databaseProviders = [
     {
-        provide: 'DATA_SOURCE',
+        provide: DATA_SOURCE,
         useFactory: async () => {
             const dataSource = new DataSource({
                 type: 'postgres',
@@ -15,11 +16,11 @@ export const databaseProviders = [
                 logging: process.env.DB_LOGGING == 'true',
                 synchronize: false,
                 entities: [
-                    User,
-                ]
+                    __dirname + '/../**/*.entity{.ts,.js}',
+                ],
             });
 
-            return dataSource;
+            return dataSource.initialize();
         },
     },
 ];

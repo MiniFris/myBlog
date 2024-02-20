@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { FindManyOptions, Repository } from 'typeorm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { FindManyOptions, QueryFailedError, Repository } from 'typeorm';
 import { randomBytes, scryptSync } from 'crypto';
+import { QueryFailedErrorCode } from 'src/database/enum/query-failed-error-code.enum';
 
-import { USER_REPOSITORY } from './constant';
+import { USER_REPOSITORY, USER_WITH_EMAIL_EXISTS } from './constant';
 import { User } from './user.entity';
 import { CreateUserPayload } from './payload/create-user.payload';
 import { UpdateUserPayload } from './payload/update-user.payload';
@@ -18,17 +19,36 @@ export class UserService {
 
     //CUD
     public async create(payload: CreateUserPayload): Promise<User> {
-        return this.repository.create({
-            ...payload,
-            password: this.encryptPassword(payload.password),
-        });
+        try {
+            return await this.repository.save({
+                ...payload,
+                password: this.encryptPassword(payload.password),
+            });
+        } catch(e) {
+            if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.UNIQUE_CONSTRAINT) {
+                throw new BadRequestException(USER_WITH_EMAIL_EXISTS(payload.email));
+            }
+            throw e;
+        }
     }
 
     public async update(id: number, payload: UpdateUserPayload): Promise<User> {
-        await this.repository.update(id, {
-            ...payload,
-            ...(payload.password ? { password: this.encryptPassword(payload.password) } : {} ),
-        });
+        try {
+            await this.repository.update(id, {
+                ...payload,
+                ...(payload.password ? { password: this.encryptPassword(payload.password) } : {} ),
+            });
+            return this.findById(id);
+        } catch(e) {
+            if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.UNIQUE_CONSTRAINT) {
+                throw new BadRequestException(USER_WITH_EMAIL_EXISTS(payload.email));
+            }
+            throw e;
+        }
+    }
+
+    public async updateRefreshToken(id: number, refreshToken: string): Promise<User> {
+        await this.repository.update(id, { refreshToken });
         return this.findById(id);
     }
 
@@ -42,8 +62,12 @@ export class UserService {
         return this.repository.find(options);
     }
 
-    public async findById(id: number, options?: FindManyOptions<User>): Promise<User> {
+    public async findById(id: number, options?: FindManyOptions<User>): Promise<User | null> {
         return this.repository.findOne({ ...options, where: { id } });
+    }
+
+    public async findByEmail(email: string, options?: FindManyOptions<User>): Promise<User | null> {
+        return this.repository.findOne({ ...options, where: { email } });
     }
 
 
