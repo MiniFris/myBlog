@@ -6,6 +6,8 @@ import { AuthJWTGuard } from 'src/auth/decorator/auth-user-guard.decorator';
 import { AuthUser } from 'src/auth/decorator/auth-user-param.decorator';
 import { AuthUserPayload } from 'src/auth/payload/auth-user.payload';
 import { PaginationDto } from 'src/common/pagination/dto/pagination.dto';
+import { CacheKey } from '@nestjs/cache-manager';
+import { CacheResponse } from 'src/cache-manager/decorator/cache-response.decorator';
 
 import { ArticleResponse } from './response/article.response';
 import { ArticleService } from './article.service';
@@ -13,6 +15,7 @@ import { Article } from './article.entity';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { ArticleSearchDto } from './dto/article-search.dto';
+import { ArticleCacheKeysEnum } from './enum/article-cache-keys.enum';
 
 @ApiTags('Статьи')
 @Controller('articles')
@@ -26,6 +29,7 @@ export class ArticleController {
     @ApiOperation({ summary: 'Получить список статей с пагинацией' })
     @ApiOkResponse({ type: PaginationResponse.createResponse(ArticleResponse) })
     @TransformToHttpResponse(PaginationResponse.createResponse(ArticleResponse))
+    @CacheResponse(ArticleCacheKeysEnum.FIND_ALL)
     @Get()
     async findAll(@Query() paginationParams: PaginationDto): Promise<PaginationResponse<Article>> {
         return this.service.getAllAndPagination(paginationParams);
@@ -34,6 +38,7 @@ export class ArticleController {
     @ApiOperation({ summary: 'Найти список статей по поисковому запросу с пагинацией' })
     @ApiOkResponse({ type: PaginationResponse.createResponse(ArticleResponse) })
     @TransformToHttpResponse(PaginationResponse.createResponse(ArticleResponse))
+    @CacheKey(ArticleCacheKeysEnum.SEARCH)
     @Get('/search')
     async search(
         @Query() paginationParams: PaginationDto,
@@ -45,6 +50,7 @@ export class ArticleController {
     @ApiOperation({ summary: 'Получить статью по ID' })
     @ApiOkResponse({ type: ArticleResponse })
     @TransformToHttpResponse(ArticleResponse)
+    @CacheKey(ArticleCacheKeysEnum.FIND_ONE)
     @Get(':id(\\d+)')
     async findOne(@Param('id') id: number): Promise<Article> {
         return this.service.findById(id);

@@ -1,5 +1,17 @@
 version: '3.4'
 services:
+    redis:
+        image: redis:latest
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        networks:
+            backend:
+                ipv4_address: 172.20.54.3
+        expose:
+            - ${REDIS_PORT}
+        restart: always
     database:
         image: postgres:15
         environment:
@@ -31,6 +43,7 @@ services:
         volumes:
             - .:/myBlog
         depends_on:
+            - redis
             - database
         network_mode: host
         restart: always
@@ -49,6 +62,7 @@ services:
             options:
                 max-size: "50m"
         depends_on:
+            - redis
             - database
         networks:
             backend:
