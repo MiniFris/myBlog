@@ -58,10 +58,6 @@ export class ArticleService {
         return this.repository.find(options);
     }
 
-    public async findAndCount(options?: FindManyOptions<Article>): Promise<[Article[], number]> {
-        return this.repository.findAndCount(options);
-    }
-
     public async findById(id: number, options?: FindManyOptions<Article>): Promise<Article | null> {
         return this.repository.findOne({ ...options, where: { id } });
     }
@@ -69,7 +65,7 @@ export class ArticleService {
 
     //Read
     public async getAllAndPagination({ offset, limit }: PaginationOptions = {}): Promise<Pagination<Article>> {
-        const [ items, totalCount ] = await this.findAndCount({ skip: offset, take: limit });
+        const [ items, totalCount ] = await this.repository.findAndCount({ skip: offset, take: limit });
         return {
             totalCount,
             items,
@@ -77,7 +73,7 @@ export class ArticleService {
     }
 
     public async search({ query, authorIds, start, end, offset, limit }: ArticleSearchOptions & PaginationOptions = {}): Promise<Pagination<Article>> {
-        const [ items, totalCount ] = await this.findAndCount({ where: {
+        const [ items, totalCount ] = await this.repository.findAndCount({ where: {
             ...(query ? { name: ILike(query), description: ILike(query) } : {}),
             ...(authorIds?.length ? { authorId: In(authorIds) } : {}),
             ...(start ? { createdAt: MoreThanOrEqual(start) } : {}),
