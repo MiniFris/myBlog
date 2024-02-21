@@ -75,10 +75,11 @@ export class ArticleController {
     @AuthJWTGuard()
     @Put(':id(\\d+)')
     async update(
+        @AuthUser() user: AuthUserPayload,
         @Param('id') id: number,
         @Body() payload: UpdateArticleDto,
     ): Promise<Article> {
-        return this.service.update(id, payload);
+        return this.service.update(id, payload, user);
     }
 
     @ApiOperation({ summary: 'Удалить статью по ID' })

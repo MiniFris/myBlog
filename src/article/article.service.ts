@@ -1,9 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { FindManyOptions, QueryFailedError, Repository } from 'typeorm';
+import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { FindManyOptions, ILike, In, LessThanOrEqual, MoreThanOrEqual, QueryFailedError, Repository } from 'typeorm';
 import { QueryFailedErrorCode } from 'src/database/enum/query-failed-error-code.enum';
 import { Pagination } from 'src/common/pagination/interface/pagination.interface';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AuthUserPayload } from 'src/auth/payload/auth-user.payload';
 
 import { AUTHOR_ID_NOT_EXIST } from './constant';
 import { Article } from './article.entity';
@@ -28,9 +29,8 @@ export class ArticleService {
     //CUD
     public async create(payload: CreateArticlePayload): Promise<Article> {
         try {
-            const model = await this.repository.save(payload);
             this.clearCache();
-            return model;
+            return await this.repository.save(payload);
         } catch(e) {
             if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.FOREIGN_KEY_CONSTRAINT) {
                 throw new BadRequestException(AUTHOR_ID_NOT_EXIST());
@@ -39,17 +39,12 @@ export class ArticleService {
         }
     }
 
-    public async update(id: number, payload: UpdateArticlePayload): Promise<Article> {
-        try {
-            await this.repository.update(id, payload);
-            this.clearCache();
-            return this.findById(id);
-        } catch(e) {
-            if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.FOREIGN_KEY_CONSTRAINT) {
-                throw new BadRequestException(AUTHOR_ID_NOT_EXIST());
-            }
-            throw e;
-        }
+    public async update(id: number, payload: UpdateArticlePayload, user: AuthUserPayload): Promise<Article> {
+        const entity = await this.repository.findOneByOrFail({ id });
+        if(entity.authorId !== user.id) throw new ForbiddenException();
+
+        this.clearCache();
+        return this.repository.save({ ...payload, id });
     }
 
     public async delete(id: number) {
@@ -82,17 +77,12 @@ export class ArticleService {
     }
 
     public async search({ query, authorIds, start, end, offset, limit }: ArticleSearchOptions & PaginationOptions = {}): Promise<Pagination<Article>> {
-        const queryBuilder = this.repository.createQueryBuilder();
-
-        query && queryBuilder.andWhere('(name ilike :query or description ilike :query)', { query: `%${query}%` });
-        authorIds?.length && queryBuilder.andWhere('"authorId" in(:...authorIds)', { authorIds });
-        start && queryBuilder.andWhere('"createdAt" >= :start', { start });
-        end && queryBuilder.andWhere('"createdAt" <= :end', { end });
-
-        const [ items, totalCount ] = await queryBuilder
-            .skip(offset)
-            .take(limit)
-            .getManyAndCount();
+        const [ items, totalCount ] = await this.findAndCount({ where: {
+            ...(query ? { name: ILike(query), description: ILike(query) } : {}),
+            ...(authorIds?.length ? { authorId: In(authorIds) } : {}),
+            ...(start ? { createdAt: MoreThanOrEqual(start) } : {}),
+            ...(end ? { createdAt: LessThanOrEqual(end) } : {}),
+        }, skip: offset, take: limit });
         return {
             totalCount,
             items,
