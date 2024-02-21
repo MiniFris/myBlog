@@ -1,0 +1,10 @@
+FROM node:18.16.0 as prod
+
+WORKDIR /myBlog
+ENV TZ=Europe/Moscow
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+COPY ./package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+CMD ["npm", "run", "start:prod"]

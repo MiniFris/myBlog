@@ -1,0 +1,77 @@
+version: '3.4'
+services:
+    redis:
+        image: redis:latest
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        networks:
+            backend:
+                ipv4_address: 172.20.54.3
+        expose:
+            - ${REDIS_PORT}
+        restart: always
+    database:
+        image: postgres:15
+        environment:
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        volumes:
+            - ./data/database:/var/lib/postgresql/data/
+        networks:
+            backend:
+                ipv4_address: 172.20.54.2
+        expose:
+            - ${DB_PORT}
+        restart: always
+    dev:
+        build:
+            context: .
+            dockerfile: "./docker/Dockerfile.dev"
+        env_file:
+            - .env
+        environment:
+            - NODE_ENV=development
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        volumes:
+            - .:/myBlog
+        depends_on:
+            - redis
+            - database
+        network_mode: host
+        restart: always
+    prod:
+        build:
+            context: .
+            dockerfile: "./docker/Dockerfile.prod"
+        env_file:
+            - .env
+        environment:
+            - NODE_ENV=production
+        ports:
+            - ${API_HTTP_PORT}:${API_HTTP_PORT}
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "50m"
+        depends_on:
+            - redis
+            - database
+        networks:
+            backend:
+                ipv4_address: 172.20.54.1
+        restart: always
+
+networks:
+    backend:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 172.20.54.0/16

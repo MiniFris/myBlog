@@ -1,0 +1,1 @@
+export const CACHE_MANAGER_KEY = 'CACHE_MANAGER_KEY';
