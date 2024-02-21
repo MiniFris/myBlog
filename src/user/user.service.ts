@@ -1,9 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindManyOptions, QueryFailedError, Repository } from 'typeorm';
 import { randomBytes, scryptSync } from 'crypto';
 import { QueryFailedErrorCode } from 'src/database/enum/query-failed-error-code.enum';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import { USER_REPOSITORY, USER_WITH_EMAIL_EXISTS } from './constant';
+import { USER_WITH_EMAIL_EXISTS } from './constant';
 import { User } from './user.entity';
 import { CreateUserPayload } from './payload/create-user.payload';
 import { UpdateUserPayload } from './payload/update-user.payload';
@@ -12,7 +13,7 @@ import { UpdateUserPayload } from './payload/update-user.payload';
 export class UserService {
 
     constructor(
-        @Inject(USER_REPOSITORY)
+        @InjectRepository(User)
         private readonly repository: Repository<User>,
     ) {}
 

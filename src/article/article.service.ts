@@ -3,8 +3,9 @@ import { FindManyOptions, QueryFailedError, Repository } from 'typeorm';
 import { QueryFailedErrorCode } from 'src/database/enum/query-failed-error-code.enum';
 import { Pagination } from 'src/common/pagination/interface/pagination.interface';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import { ARTICLE_REPOSITORY, AUTHOR_ID_NOT_EXIST } from './constant';
+import { AUTHOR_ID_NOT_EXIST } from './constant';
 import { Article } from './article.entity';
 import { CreateArticlePayload } from './payload/create-article.payload';
 import { UpdateArticlePayload } from './payload/update-article.payload';
@@ -17,7 +18,7 @@ import { ArticleCacheKeysEnum } from './enum/article-cache-keys.enum';
 export class ArticleService {
 
     constructor(
-        @Inject(ARTICLE_REPOSITORY)
+        @InjectRepository(Article)
         private readonly repository: Repository<Article>,
         @Inject(CACHE_MANAGER)
         private readonly cacheManager: Cache,
