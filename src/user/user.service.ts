@@ -35,11 +35,12 @@ export class UserService {
 
     public async update(id: number, payload: UpdateUserPayload): Promise<User> {
         try {
-            await this.repository.update(id, {
+            await this.repository.findOneByOrFail({ id });
+            return await this.repository.save({
                 ...payload,
                 ...(payload.password ? { password: this.encryptPassword(payload.password) } : {} ),
+                id,
             });
-            return this.findById(id);
         } catch(e) {
             if(e instanceof QueryFailedError && +e.driverError.code === QueryFailedErrorCode.UNIQUE_CONSTRAINT) {
                 throw new BadRequestException(USER_WITH_EMAIL_EXISTS(payload.email));
@@ -49,8 +50,8 @@ export class UserService {
     }
 
     public async updateRefreshToken(id: number, refreshToken: string): Promise<User> {
-        await this.repository.update(id, { refreshToken });
-        return this.findById(id);
+        await this.repository.findOneByOrFail({ id });
+        return this.repository.save({ id, refreshToken });
     }
 
     public async delete(id: number) {
