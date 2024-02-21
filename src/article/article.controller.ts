@@ -87,7 +87,7 @@ export class ArticleController {
     @HttpCode(HttpStatus.NO_CONTENT)
     @AuthJWTGuard()
     @Delete(':id(\\d+)')
-    async remove(@Param('id') id: number) {
+    async delete(@Param('id') id: number) {
         await this.service.delete(id);
     }
 }

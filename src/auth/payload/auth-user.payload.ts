@@ -1,4 +1,3 @@
-
 export interface AuthUserPayload {
     id: number;
     firstName: string;

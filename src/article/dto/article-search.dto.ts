@@ -21,11 +21,11 @@ export class ArticleSearchDto {
     @Type(() => Date)
     @IsDate()
     @IsOptional()
-    start: Date;
+    start?: Date;
 
     @ApiProperty({ required: false, description: 'Конец диапазона времени публикации', example: new Date(new Date().setHours(100)) })
     @Type(() => Date)
     @IsDate()
     @IsOptional()
-    end: Date;
+    end?: Date;
 }
