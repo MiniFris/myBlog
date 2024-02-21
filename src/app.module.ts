@@ -9,7 +9,7 @@ import { CacheManagerModule } from './cache-manager/cache-manager.module';
 @Module({
     imports: [
         CacheManagerModule.register(),
-        DatabaseModule,
+        DatabaseModule.register(),
         AuthModule,
         UserModule,
         ArticleModule,

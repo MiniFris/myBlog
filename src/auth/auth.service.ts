@@ -27,8 +27,7 @@ export class AuthService {
 
     public async login(payload: LoginPayload): Promise<AuthTokens> {
         const user = await this.userService.findByEmail(payload.email);
-        if(!user) throw new ForbiddenException();
-        if(!this.verify(user, payload.password)) throw new BadRequestException(WRONG_LOGIN_OR_PASSWORD());
+        if(!(user && this.verify(user, payload.password))) throw new BadRequestException(WRONG_LOGIN_OR_PASSWORD());
 
         const tokens = await this.getTokens(user);
         await this.userService.updateRefreshToken(user.id, tokens.refreshToken);
@@ -37,6 +36,7 @@ export class AuthService {
 
     public async refreshTokens(payload: AuthUserPayload): Promise<AuthTokens> {
         if(!payload.refreshToken) throw new ForbiddenException();
+
         const user = await this.userService.findById(payload.id);
         if(!user) throw new ForbiddenException();
 
